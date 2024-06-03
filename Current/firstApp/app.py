@@ -1,22 +1,42 @@
-from flask import Flask, request, render_template
+import os
+import uuid
+import pandas as pd
+from flask import Flask, request, render_template, Response, send_from_directory, url_for
 
 app = Flask(__name__, template_folder='templates')
 
-@app.route('/')
+# @app.route('/')
+# def index():
+#     myvalue = 'vishwa'
+#     myresult = '7.1'
+#     mylist = [1, 2, 3, 4, 5]
+#     return render_template('index.html', mylist=mylist)
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    myvalue = 'vishwa'
-    myresult = '7.1'
-    mylist = [1, 2, 3, 4, 5]
-    return render_template('index.html', mylist=mylist)
+    if request.method == 'GET':
+        return render_template('index.html')
+    elif request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if username == 'vishwa' and password == 'password':
+            return 'POST request : Success'
+        else:
+            return 'POST request : Failure'
+
 
 @app.route('/filter')
 def filter():
     some_text = 'Creating Filters'
     return render_template('filter.html', some_text=some_text)
 
+
 @app.route('/redirect_endpoint')
 def redirect_endpoint():
     return redirect(url_for('filter'))
+
 
 @app.route('/hello', methods=['GET', 'POST'])
 def hello():
@@ -32,9 +52,11 @@ def hello():
 def greet(name):
     return f"Congratulations {name}"
 
+
 @app.route('/add/<int:num1>/<int:num2>')
 def add(num1, num2):
     return f'{num1} + {num2} = {num1 + num2}'
+
 
 @app.route('/handle_url_params')
 def handle_params():
@@ -50,6 +72,7 @@ def handle_params():
 def reverse_string(s):
     return s[::-1]
 
+
 @app.template_filter('repeat')
 def repeat(s, times=2):
     return s * times
@@ -57,7 +80,50 @@ def repeat(s, times=2):
 
 @app.template_filter('alternate_case')
 def altername_case(s):
-    return ''.join([c.upper() if i%2 == 0 else c.lower() for i, c in enumerate(s)])
+    return ''.join([c.upper() if i % 2 == 0 else c.lower() for i, c in enumerate(s)])
+
+
+@app.route('/file_upload', methods=['POST'])
+def file_upload():
+    file = request.files.get('file')
+    if file.content_type == 'text/plain':
+        return file.read().decode()
+    elif (file.content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          or file.content_type == 'application/vnd.ms-excel'):
+        df = pd.read_excel(file)
+        return df.to_html()
+
+
+@app.route('/convert_csv', methods=['POST'])
+def convert_csv():
+    file = request.files.get('file')
+    df = pd.read_excel(file)
+    response = Response(
+        df.to_csv(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': 'attachment; filename=result.csv'
+        }
+    )
+    return response
+
+
+@app.route('/convert_csv_two', methods=['POST'])
+def convert_csv_two():
+    file = request.files.get('file')
+    df = pd.read_excel(file)
+    if not os.path.exists('downloads'):
+        os.makedirs('downloads')
+
+    filename = f'{uuid.uuid4()}.csv'
+    df.to_csv(os.path.join('downloads', filename))
+
+    return render_template('download.html', filename=filename)
+
+
+@app.route('/download/<filename>')
+def download(filename):
+    return send_from_directory('downloads', filename, download_name='result.csv')
 
 
 if __name__ == '__main__':
