@@ -3,5 +3,7 @@
 
 {% block content %}
     <h1>Download</h1>
-    <a href = "{{ url_for('download'), filename=filename }}">Download File</a>
+    <!-- <a href =  "{{ url_for('download'), filename=filename }}">Download File</a> -->
+    <a href="{{ url_for('download', filename=filename) }}">Download File</a>
+
 {% endblock %}
