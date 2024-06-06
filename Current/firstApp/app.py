@@ -3,7 +3,7 @@ import uuid
 import pandas as pd
 from flask import Flask, request, render_template, Response, send_from_directory, url_for, jsonify
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/')
 
 # @app.route('/')
 # def index():
